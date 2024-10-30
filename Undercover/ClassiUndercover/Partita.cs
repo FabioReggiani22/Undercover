@@ -6,6 +6,13 @@ using System.Threading.Tasks;
 
 namespace ClassiUndercover
 {
+    public enum StatoPartita
+    {
+        VittoriaC,
+        VittoriaU,
+        VittoriaM,
+        InCorso
+    }
     public class Partita
     {
         private List<Giocatore> _giocatori;
@@ -14,6 +21,8 @@ namespace ClassiUndercover
         private int _nGiocatori;
         private int[]? _posMrW;
         private int[]? _posUnd;
+        private StatoPartita _statoPartita;
+
         public Partita(List<Giocatore> giocatori, string parolaCiv, string? parolaUnder, int nGiocatori,int? nWhite,int? nUnder)
         {
             if (String.IsNullOrEmpty(parolaCiv)) throw new ArgumentException("La parola dei civili non può essere vuota o nulla");
@@ -25,6 +34,7 @@ namespace ClassiUndercover
             _nGiocatori = nGiocatori;
             _parolaCiv = parolaCiv;
             _parolaUnder = parolaUnder;
+            _statoPartita = StatoPartita.InCorso;
             if (nWhite == null) _posMrW = null;
             else _posMrW = new int[(int)nWhite];
 
@@ -79,11 +89,55 @@ namespace ClassiUndercover
         {
             get => _giocatori;
         }
-        public void RimuoviGiocatore(Giocatore giocatore)
+        public void RimuoviGiocatoreCivile(Giocatore giocatore)
         {
             if (giocatore == null) throw new ArgumentNullException("Il giocatore non può essere nullo");
             Giocatori.Remove(giocatore);
         }
+        public bool TentativoMrWhite(string parolaTentativo,Giocatore white)
+        {
+            if (white == null || white.RuoloGiocatore != Ruolo.MrWhite) throw new ArgumentException("Il giocatore non sono accettabili"); 
+            if (String.IsNullOrEmpty(parolaTentativo)) throw new ArgumentNullException("Il tentativo non è accettabile");
+            bool vittoria = false;
+            if (parolaTentativo == _parolaCiv)
+            {
+                vittoria = true;
+                AssegnaPunteggioVincitori(Ruolo.MrWhite);
+            }
+            else
+            {
+                _giocatori.Remove(white);
+            }
 
+            return vittoria;
+        }
+        public void VerificaVittoria()
+        {
+            int civ = 0;
+            int und = 0;
+            int white = 0;
+
+            foreach(Giocatore giocatore in _giocatori)
+            {
+                if (giocatore.RuoloGiocatore == Ruolo.Civile) civ += 1;
+                else if(giocatore.RuoloGiocatore == Ruolo.Undercover) und += 1;
+                else if(giocatore.RuoloGiocatore== Ruolo.MrWhite) white += 1;
+            }
+            //vittoria MrWhite
+            if((civ+und)<white)
+            {
+                _statoPartita = StatoPartita.VittoriaM;
+                AssegnaPunteggioVincitori(Ruolo.Undercover);
+            }
+
+        }
+
+        private void AssegnaPunteggioVincitori(Ruolo ruolo)
+        {
+            foreach(Giocatore giocatore in _giocatori)
+            {
+                if(giocatore.RuoloGiocatore==ruolo) giocatore.IncrementaPunteggio();
+            }
+        }
     }
 }
