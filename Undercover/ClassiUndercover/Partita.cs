@@ -10,7 +10,7 @@ namespace ClassiUndercover
     {
         VittoriaC,
         VittoriaU,
-        VittoriaM,
+        VittoriaW,
         InCorso
     }
     public class Partita
@@ -18,35 +18,35 @@ namespace ClassiUndercover
         private List<Giocatore> _giocatori;
         private string _parolaCiv;
         private string? _parolaUnder;
-        private int _nGiocatori;
         private int[]? _posMrW;
         private int[]? _posUnd;
         private StatoPartita _statoPartita;
 
-        public Partita(List<Giocatore> giocatori, string parolaCiv, string? parolaUnder, int nGiocatori,int? nWhite,int? nUnder)
+        public Partita(List<Giocatore> giocatori, string parolaCiv, string? parolaUnder,int? nWhite,int? nUnder)
         {
             if (String.IsNullOrEmpty(parolaCiv)) throw new ArgumentException("La parola dei civili non può essere vuota o nulla");
-            if (parolaUnder != null && (parolaUnder == "" || parolaUnder == " ")) throw new ArgumentException("La parola degli undercover non può essere nulla");
+            if (parolaUnder != null && String.IsNullOrEmpty(parolaUnder)) throw new ArgumentException("La parola degli undercover non può essere nulla");
             if (nWhite < 0 || nUnder < 0) throw new ArgumentException("Il numero non è accettabile");
             if (nWhite == null && nUnder == null) throw new ArgumentNullException("Entrambi i numeri non possono essere nulli");
             if ((nWhite == 0 && nUnder == null) || (nWhite == null && nUnder == 0)) throw new ArgumentException("I numeri non sono accettabili");
+
             _giocatori = [.. giocatori];
-            _nGiocatori = nGiocatori;
             _parolaCiv = parolaCiv;
             _parolaUnder = parolaUnder;
             _statoPartita = StatoPartita.InCorso;
+
             if (nWhite == null) _posMrW = null;
             else _posMrW = new int[(int)nWhite];
 
             if (nUnder== null) _posUnd= null;
             else _posUnd = new int[(int)nUnder];
 
-            RiempiPosRuoli();
+            ConsegnaRuoli();
 
 
         }
 
-        private void RiempiPosRuoli()
+        private void ConsegnaRuoli()
         {
             Random r = new Random();
             List<int> numeriUsciti = new List<int>();
@@ -57,7 +57,7 @@ namespace ClassiUndercover
                 {
                     do
                     {
-                        numeroUscito = r.Next(0, _nGiocatori);
+                        numeroUscito = r.Next(0, _giocatori.Count);
                         if (!numeriUsciti.Contains(numeroUscito))
                         {
                             _posMrW [i] = numeroUscito;
@@ -73,7 +73,7 @@ namespace ClassiUndercover
                 {
                     do
                     {
-                        numeroUscito = r.Next(0, _nGiocatori);
+                        numeroUscito = r.Next(0, _giocatori.Count);
                         if (!numeriUsciti.Contains(numeroUscito))
                         {
                             _posUnd[i] = numeroUscito;
@@ -83,16 +83,24 @@ namespace ClassiUndercover
                     } while (true);
                 }
             }
+            for (int i = 0; i < _giocatori.Count; i++) 
+            {
+                if (!numeriUsciti.Contains(i))
+                {
+                    _giocatori[i].AssegnaRuolo(Ruolo.Civile);
+                }
+            }
         }
 
         public List<Giocatore> Giocatori
         {
             get => _giocatori;
         }
-        public void RimuoviGiocatoreCivile(Giocatore giocatore)
+        public void RimuoviGiocatoreCivileOUnder(Giocatore giocatore)
         {
             if (giocatore == null) throw new ArgumentNullException("Il giocatore non può essere nullo");
             Giocatori.Remove(giocatore);
+            VerificaVittoria();
         }
         public bool TentativoMrWhite(string parolaTentativo,Giocatore white)
         {
@@ -107,6 +115,7 @@ namespace ClassiUndercover
             else
             {
                 _giocatori.Remove(white);
+                VerificaVittoria();
             }
 
             return vittoria;
@@ -123,11 +132,35 @@ namespace ClassiUndercover
                 else if(giocatore.RuoloGiocatore == Ruolo.Undercover) und += 1;
                 else if(giocatore.RuoloGiocatore== Ruolo.MrWhite) white += 1;
             }
-            //vittoria MrWhite
+            Ruolo? vincitore=null;
+            //controllo vittoria mr.White
             if((civ+und)<white)
             {
-                _statoPartita = StatoPartita.VittoriaM;
+                vincitore = Ruolo.MrWhite;
+                _statoPartita = StatoPartita.VittoriaW;
                 AssegnaPunteggioVincitori(Ruolo.Undercover);
+            }
+            else
+            {
+                if (white == 0)
+                {
+                    //controllo vittoria undercover
+                    if (und > civ)
+                    {
+                        vincitore= Ruolo.Undercover;
+                        _statoPartita=StatoPartita.VittoriaU;
+                    }
+                    //controllo vittoria civili
+                    else if (und == 0)
+                    {
+                        vincitore = Ruolo.Civile;
+                        _statoPartita= StatoPartita.VittoriaC;
+                    }
+                }
+            }
+            if (vincitore!=null)
+            {
+                AssegnaPunteggioVincitori((Ruolo)vincitore);
             }
 
         }

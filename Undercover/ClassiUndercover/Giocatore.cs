@@ -11,12 +11,11 @@
         private string _nome;
         private Ruolo _ruolo;
         private int _punteggio;
-        private string? _parolaAssegnata;
 
-        public Giocatore(string nome)
+        public Giocatore(string nome,int punteggio=0)
         {
             Nome = nome;
-            Punteggio = 0;
+            Punteggio = punteggio;
         }
         public string Nome
         {
@@ -45,18 +44,13 @@
                 _punteggio = value;
             }
         }
-        public string? ParolaAssegnata
-        {
-            get => _parolaAssegnata;
-        }
         public void IncrementaPunteggio()
         {
             Punteggio += 1;
         }        
-        public void AssegnaParolaERuolo(Ruolo ruolo, string? parola=null)
+        public void AssegnaRuolo(Ruolo ruolo)
         {
             RuoloGiocatore = ruolo;
-            _parolaAssegnata=parola;
         }
         public override bool Equals(object? obj)
         {
@@ -66,6 +60,10 @@
                 return false;
             }
             return false;
+        }
+        public override string ToString()
+        {
+            return Nome + "," + _punteggio;
         }
     }
 }

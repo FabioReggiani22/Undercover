@@ -8,9 +8,21 @@ namespace ClassiUndercover
 {
     public class Gioco
     {
-        public List<Giocatore> _giocatori;
+        private List<Giocatore> _giocatoriTotali;
+        private List<Giocatore> _giocatoriPartita;
         // formato parole file: parolaCiv / parolaUnder,parolaUnder
-        public List<string> _parole;
+        private Partita _partita;
+
+        public Gioco()
+        {
+            
+        }
+
+        private void OttieniGiocatoriTotali()
+        {
+
+        }
+            
 
     }
 }
